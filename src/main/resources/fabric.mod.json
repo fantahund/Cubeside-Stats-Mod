@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "stats",
+  "version": "${version}",
+  "name": "Stats",
+  "description": "",
+  "authors": [
+    "fanta"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/stats/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["de.fanta.stats.client.StatsClient"],
+    "modmenu": ["de.fanta.stats.ConfigMenu"]
+  },
+  "mixins": [
+    "stats.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "1.17.1"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "cloth-config2": "*"
+  }
+}
