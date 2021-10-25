@@ -4,11 +4,12 @@
   "version": "${version}",
   "name": "Stats",
   "description": "",
-  "authors": [
-    "fanta"
-  ],
+  "authors": [ "fanta" ],
   "contact": {},
   "license": "MIT",
+  "homepage": "https://stats.cubeside.de",
+  "sources": "https://github.com/fantahund/Cubeside-Stats-Mod",
+  "issues": "https://github.com/fantahund/Cubeside-Stats-Mod/issues/new",
   "icon": "assets/stats/icon.png",
   "environment": "client",
   "entrypoints": {
