@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 public class Config {
+    public static Boolean showstats = true;
     public static String statsurl = "Cubes";
     public static int places = 3;
     public static Boolean headline = true;
@@ -20,6 +21,7 @@ public class Config {
 
     static void serialize() {
         Properties prop = new Properties();
+        prop.setProperty("showstats", String.valueOf(showstats));
         prop.setProperty("statsurl", statsurl);
         prop.setProperty("places", String.valueOf(places));
         prop.setProperty("headline", String.valueOf(headline));
@@ -37,6 +39,7 @@ public class Config {
         try {
             InputStream s = Files.newInputStream(configPath);
             prop.load(s);
+            showstats = Boolean.parseBoolean(prop.getProperty("showstats", "true"));
             statsurl = prop.getProperty("statsurl", statsurl);
             places = Integer.parseInt(prop.getProperty("places", String.valueOf(places)));
             headline = Boolean.parseBoolean(prop.getProperty("headline", "true"));

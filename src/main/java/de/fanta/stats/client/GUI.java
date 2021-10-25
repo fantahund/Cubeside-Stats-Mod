@@ -108,13 +108,16 @@ public class GUI {
     }
 
     public void onRenderGameOverlayPost(MatrixStack stack) {
-        if (!visible || minecraft.options.debugEnabled)
+        if (!visible || minecraft.options.debugEnabled) {
             return;
-        GlStateManager._clearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        renderItems(stack);
+        }
+        if (Config.showstats) {
+            GlStateManager._clearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            renderStats(stack);
+        }
     }
 
-    private void renderItems(MatrixStack stack) {
+    private void renderStats(MatrixStack stack) {
         RenderSize result = new RenderSize(0, 0);
         Color[] colors = {new Color(226, 176, 7), new Color(138, 149, 151), new Color(167, 104, 75)};
         synchronized (this.scores) {
