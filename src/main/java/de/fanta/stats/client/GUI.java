@@ -12,7 +12,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
-import net.minecraft.stat.Stat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -61,7 +60,7 @@ public class GUI {
                                 int ii = 0;
                                 while (ii < ss.size()) {
                                     Element element = ss.get(ii);
-                                    if (element.hasClass("align-right") &! element.hasClass("hideable")) {
+                                    if (element.hasClass("align-right") & !element.hasClass("hideable")) {
                                         String[] values = new String[2];
                                         values[0] = href.text();
                                         values[1] = element.text();
@@ -100,7 +99,6 @@ public class GUI {
 
     private static class RenderSize {
         int width;
-
         int height;
 
         RenderSize(int w, int h) {
@@ -120,10 +118,14 @@ public class GUI {
         RenderSize result = new RenderSize(0, 0);
         Color[] colors = {new Color(226, 176, 7), new Color(138, 149, 151), new Color(167, 104, 75)};
         synchronized (this.scores) {
+            if (Config.headline) {
+                this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + Config.statsurl + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
+                result.height += 15;
+            }
             for (int i = 0; i < this.scores.size(); i++) {
                 String playerName = ((String[]) this.scores.get(i))[0];
                 String score = ((String[]) this.scores.get(i))[1];
-                result.width = getWith(result.width, (i + 1) + ". " +playerName + ": " + score);
+                result.width = getWith(result.width, (i + 1) + ". " + playerName + ": " + score);
                 ItemStack itemStack = skull.get(playerName);
                 if (itemStack != null) {
                     this.itemRenderer.renderGuiItemIcon(skull.get(playerName), 5, 30 + result.height);
@@ -132,7 +134,7 @@ public class GUI {
                 if (i < 3) {
                     this.fontRenderer.drawWithShadow(stack, "§l" + (i + 1) + ". " + playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), colors[i].getRGB());
                 } else {
-                    this.fontRenderer.drawWithShadow(stack, "§l" + (i + 1) + ". " +  playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255,255,255).getRGB());
+                    this.fontRenderer.drawWithShadow(stack, "§l" + (i + 1) + ". " + playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
                 }
                 result.height += 15;
 
@@ -141,7 +143,6 @@ public class GUI {
         if (result.width != 0)
             result.width += 20;
     }
-
 
     private int getWith(int resultWidth, String text) {
         int width = this.fontRenderer.getWidth(text);

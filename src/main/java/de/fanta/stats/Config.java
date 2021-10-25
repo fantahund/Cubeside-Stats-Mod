@@ -14,6 +14,7 @@ import java.util.Properties;
 public class Config {
     public static String statsurl = "Cubes";
     public static int places = 3;
+    public static Boolean headline = true;
 
     static final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("cubeside-stats.properties");
 
@@ -21,6 +22,7 @@ public class Config {
         Properties prop = new Properties();
         prop.setProperty("statsurl", statsurl);
         prop.setProperty("places", String.valueOf(places));
+        prop.setProperty("headline", String.valueOf(headline));
         try {
             OutputStream s = Files.newOutputStream(configPath);
             prop.store(s, "Cubeside Config");
@@ -37,6 +39,7 @@ public class Config {
             prop.load(s);
             statsurl = prop.getProperty("statsurl", statsurl);
             places = Integer.parseInt(prop.getProperty("places", String.valueOf(places)));
+            headline = Boolean.parseBoolean(prop.getProperty("headline", "true"));
         } catch (IOException e) {
             StatsClient.LOGGER.warn("Failed to read config!");
         }
