@@ -8,6 +8,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -34,6 +35,11 @@ public class GUI {
 
     public final List<Object> scores = new ArrayList<>();
 
+    public static String ownPos;
+    public static String ownPlayerName;
+    public static String ownScore;
+    public static ItemStack ownStack;
+
     public final HashMap<String, ItemStack> skull = new HashMap<>();
 
     public GUI() {
@@ -44,6 +50,36 @@ public class GUI {
         Thread updater = new Thread(() -> {
             try {
                 while (true) {
+                    // - Get OwnScore
+                    PlayerEntity player = minecraft.player;
+                    if (player == null) {
+                        return;
+                    }
+
+                    ownPlayerName = player.getName().asString();
+
+                    String connString = StatsClient.StatsURLs.get(Config.statsurl) + "/desc/1?player=" + ownPlayerName;
+                    Document own = Jsoup.connect(connString).get();
+                    String classname = "searched-row";
+                    Element sel = own.getElementsByClass(classname).first();
+                    if (sel != null) {
+                        ownPos = sel.getElementsByTag("td").first().text();
+
+                        Elements tmp = sel.getElementsByClass("align-right");
+                        for (Element el : tmp) {
+                            if (!el.hasClass("hideable")) {
+                                ownScore = el.text();
+                            }
+                        }
+
+                        ownStack = new ItemStack(Items.PLAYER_HEAD);
+                        GameProfile ownGameProfile = new GameProfile(null, ownPlayerName);
+                        SkullBlockEntity.loadProperties(ownGameProfile, (profile) -> ownStack.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile)));
+                    }
+
+
+
+                    // Dep
                     Document doc = Jsoup.connect(StatsClient.StatsURLs.get(Config.statsurl)).get();
                     Element body = doc.body();
                     Elements elements = body.getElementsByTag("table");
@@ -140,7 +176,16 @@ public class GUI {
                     this.fontRenderer.drawWithShadow(stack, "§l" + (i + 1) + ". " + playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
                 }
                 result.height += 15;
-
+            }
+            for (Object score : this.scores) {
+                String playerName = ((String[]) score)[0];
+                if (!playerName.contains(ownPlayerName)) {
+                    this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + "Deine Platzierung" + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
+                    result.height += 15;
+                    this.itemRenderer.renderGuiItemIcon(ownStack, 5, 30 + result.height);
+                    this.fontRenderer.drawWithShadow(stack, "§l" + ownPos + " " + ownPlayerName + ": " + ownScore, (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
+                }
+                break;
             }
         }
         if (result.width != 0)
