@@ -178,16 +178,16 @@ public class GUI {
                 result.height += 15;
             }
             if (ownScore != null && ownPos != null && ownStack != null && ownPlayerName != null) {
-                boolean showOwnCore = true;
+                boolean showOwnScore = true;
                 for (Object score : this.scores) {
                     String playerName = ((String[]) score)[0];
                     if (playerName.contains(ownPlayerName)) {
-                        showOwnCore = false;
+                        showOwnScore = false;
                         break;
                     }
                 }
 
-                if (showOwnCore) {
+                if (showOwnScore) {
                     this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + "Deine Platzierung" + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
                     result.height += 15;
                     this.itemRenderer.renderGuiItemIcon(ownStack, 5, 30 + result.height);
