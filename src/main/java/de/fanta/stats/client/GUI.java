@@ -56,7 +56,7 @@ public class GUI {
                         return;
                     }
 
-                    ownPlayerName = player.getName().asString();
+                    ownPlayerName = player.getName().getString();
 
                     String connString = StatsClient.StatsURLs.get(Config.statsurl) + "/desc/1?player=" + ownPlayerName;
                     Document own = Jsoup.connect(connString).get();
