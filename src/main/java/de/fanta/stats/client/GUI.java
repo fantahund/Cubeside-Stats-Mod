@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
+import org.apache.logging.log4j.Level;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -48,8 +49,8 @@ public class GUI {
         this.itemRenderer = minecraft.getItemRenderer();
         visible = true;
         Thread updater = new Thread(() -> {
-            try {
-                while (true) {
+            while (true) {
+                try {
                     // - Get OwnScore
                     PlayerEntity player = minecraft.player;
                     if (player == null) {
@@ -72,12 +73,13 @@ public class GUI {
                             }
                         }
 
-                        ownStack = new ItemStack(Items.PLAYER_HEAD);
-                        GameProfile ownGameProfile = new GameProfile(null, ownPlayerName);
-                        SkullBlockEntity.loadProperties(ownGameProfile, (profile) -> ownStack.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile)));
+                        if (ownStack == null) {
+                            ownStack = new ItemStack(Items.PLAYER_HEAD);
+                            GameProfile ownGameProfile = new GameProfile(null, ownPlayerName);
+                            SkullBlockEntity.loadProperties(ownGameProfile, (profile) -> ownStack.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile)));
+                        }
+
                     }
-
-
 
                     // Dep
                     Document doc = Jsoup.connect(StatsClient.StatsURLs.get(Config.statsurl)).get();
@@ -85,6 +87,9 @@ public class GUI {
                     Elements elements = body.getElementsByTag("table");
                     if (!elements.isEmpty()) {
                         Element table = elements.first();
+                        if (table == null) {
+                            return;
+                        }
                         Elements tableRows = table.getElementsByTag("tbody").first().getElementsByTag("tr");
                         if (tableRows.size() > 1) {
                             List<Object> scores = new ArrayList<>();
@@ -92,6 +97,11 @@ public class GUI {
                             while (i < Config.places + 1 && i < tableRows.size()) {
                                 Element row = tableRows.get(i);
                                 Element href = row.getElementsByTag("a").first();
+
+                                if (href == null) {
+                                    return;
+                                }
+
                                 Elements ss = row.getElementsByTag("td");
                                 int ii = 0;
                                 while (ii < ss.size()) {
@@ -124,11 +134,16 @@ public class GUI {
                             }
                         }
                     }
-                    Thread.sleep(1000 * 30);
+                } catch (java.io.IOException e) {
+                    StatsClient.LOGGER.log(Level.ERROR, e);
                 }
-            } catch (InterruptedException | java.io.IOException e) {
-                e.printStackTrace();
+                try {
+                    Thread.sleep(1000 * 30);
+                } catch (InterruptedException e) {
+                    StatsClient.LOGGER.log(Level.ERROR, e);
+                }
             }
+
         });
         updater.start();
     }
