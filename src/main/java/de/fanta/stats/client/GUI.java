@@ -2,6 +2,7 @@ package de.fanta.stats.client;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.GlStateManager;
+import de.cubeside.cubesidestatswebapi.model.PlayerStatsEntry;
 import de.fanta.stats.Config;
 import net.minecraft.block.entity.SkullBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -14,41 +15,35 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
 import org.apache.logging.log4j.Level;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class GUI {
     private final MinecraftClient minecraft;
-
     private static boolean visible;
-
     private final TextRenderer fontRenderer;
-
     private final ItemRenderer itemRenderer;
-
-    public final List<Object> scores = new ArrayList<>();
-
-    public static String ownPos;
-    public static String ownPlayerName;
-    public static String ownScore;
-    public static ItemStack ownStack;
-
-    public final HashMap<String, ItemStack> skull = new HashMap<>();
+    private static PlayerStatsEntry ownStatsEntry;
+    private static String ownPlayerName;
+    private static final Collection<PlayerStatsEntry> otherStatsEntries = new ArrayList<>();
+    private static final Collection<PlayerStatsEntry> positionStatsEntries = new ArrayList<>();
+    private final HashMap<String, ItemStack> skullList = new HashMap<>();
+    public static Thread updater;
 
     public GUI() {
         this.minecraft = MinecraftClient.getInstance();
         this.fontRenderer = minecraft.textRenderer;
         this.itemRenderer = minecraft.getItemRenderer();
         visible = true;
-        Thread updater = new Thread(() -> {
+        updater = new Thread(() -> {
             while (true) {
                 try {
                     // - Get OwnScore
@@ -58,89 +53,65 @@ public class GUI {
                     }
 
                     ownPlayerName = player.getName().getString();
+                    ownStatsEntry = StatsClient.getCubesideStats().getStatsFromPlayerOrUUID(Config.statsKeyID, ownPlayerName);
 
-                    String connString = StatsClient.StatsURLs.get(Config.statsurl) + "/desc/1?player=" + ownPlayerName;
-                    Document own = Jsoup.connect(connString).get();
-                    String classname = "searched-row";
-                    Element sel = own.getElementsByClass(classname).first();
-                    if (sel != null) {
-                        ownPos = sel.getElementsByTag("td").first().text();
-
-                        Elements tmp = sel.getElementsByClass("align-right");
-                        for (Element el : tmp) {
-                            if (!el.hasClass("hideable")) {
-                                ownScore = el.text();
-                            }
-                        }
-
-                        if (ownStack == null) {
-                            ownStack = new ItemStack(Items.PLAYER_HEAD);
+                    synchronized (skullList) {
+                        if (!skullList.containsKey(ownPlayerName)) {
+                            ItemStack ownDisplayHead = new ItemStack(Items.PLAYER_HEAD);
                             GameProfile ownGameProfile = new GameProfile(null, ownPlayerName);
-                            SkullBlockEntity.loadProperties(ownGameProfile, (profile) -> ownStack.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile)));
+                            SkullBlockEntity.loadProperties(ownGameProfile, (profile) -> ownDisplayHead.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile)));
+                            skullList.put(ownPlayerName, ownDisplayHead);
                         }
-
                     }
 
-                    // Dep
-                    Document doc = Jsoup.connect(StatsClient.StatsURLs.get(Config.statsurl)).get();
-                    Element body = doc.body();
-                    Elements elements = body.getElementsByTag("table");
-                    if (!elements.isEmpty()) {
-                        Element table = elements.first();
-                        if (table == null) {
-                            return;
-                        }
-                        Elements tableRows = table.getElementsByTag("tbody").first().getElementsByTag("tr");
-                        if (tableRows.size() > 1) {
-                            List<Object> scores = new ArrayList<>();
-                            int i = 1;
-                            while (i < Config.places + 1 && i < tableRows.size()) {
-                                Element row = tableRows.get(i);
-                                Element href = row.getElementsByTag("a").first();
+                    // - Get OtherScores
+                    Collection<String> otherPlayers = new ArrayList<>();
+                    for (String otherPlayer : Config.otherPlayers.split(",")) {
+                        otherPlayers.add(otherPlayer.replace(" ", ""));
+                    }
 
-                                if (href == null) {
-                                    return;
-                                }
-
-                                Elements ss = row.getElementsByTag("td");
-                                int ii = 0;
-                                while (ii < ss.size()) {
-                                    Element element = ss.get(ii);
-                                    if (element.hasClass("align-right") & !element.hasClass("hideable")) {
-                                        String[] values = new String[2];
-                                        values[0] = href.text();
-                                        values[1] = element.text();
-                                        scores.add(values);
-                                        break;
-                                    }
-                                    ii++;
-                                }
-                                synchronized (this.skull) {
-                                    if (!skull.containsKey(href.toString())) {
-                                        ItemStack itemStack = new ItemStack(Items.PLAYER_HEAD);
-                                        GameProfile gameProfile = new GameProfile(null, href.text());
-                                        SkullBlockEntity.loadProperties(gameProfile, (profile) -> {
-                                            itemStack.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile));
-                                            skull.put(href.text(), itemStack);
-                                        });
-                                    }
-                                }
-                                i++;
-                            }
-
-                            synchronized (this.scores) {
-                                this.scores.clear();
-                                this.scores.addAll(scores);
+                    Collection<PlayerStatsEntry> newOtherPositionEntries = new ArrayList<>(StatsClient.getCubesideStats().getStatsFromPlayersOrUUIDs(Config.statsKeyID, otherPlayers));
+                    synchronized (skullList) {
+                        for (PlayerStatsEntry statsPlayer : newOtherPositionEntries) {
+                            if (!skullList.containsKey(statsPlayer.getName())) {
+                                ItemStack playerHead = new ItemStack(Items.PLAYER_HEAD);
+                                GameProfile ownGameProfile = new GameProfile(null, statsPlayer.getName());
+                                SkullBlockEntity.loadProperties(ownGameProfile, (profile) -> playerHead.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile)));
+                                skullList.put(statsPlayer.getName(), playerHead);
                             }
                         }
                     }
-                } catch (java.io.IOException e) {
-                    StatsClient.LOGGER.log(Level.ERROR, e);
+
+                    synchronized (otherStatsEntries) {
+                        otherStatsEntries.clear();
+                        otherStatsEntries.addAll(newOtherPositionEntries);
+                    }
+
+                    // - Get PositionScores
+                    Collection<PlayerStatsEntry> newPositionStatsEntries = new ArrayList<>(StatsClient.getCubesideStats().getStatsFromPositionRange(Config.statsKeyID, 0, Config.places - 1));
+
+                    synchronized (skullList) {
+                        for (PlayerStatsEntry statsPlayer : newPositionStatsEntries) {
+                            if (!skullList.containsKey(statsPlayer.getName())) {
+                                ItemStack playerHead = new ItemStack(Items.PLAYER_HEAD);
+                                GameProfile ownGameProfile = new GameProfile(null, statsPlayer.getName());
+                                SkullBlockEntity.loadProperties(ownGameProfile, (profile) -> playerHead.getOrCreateNbt().put("SkullOwner", NbtHelper.writeGameProfile(new NbtCompound(), profile)));
+                                skullList.put(statsPlayer.getName(), playerHead);
+                            }
+                        }
+                    }
+
+                    synchronized (positionStatsEntries) {
+                        positionStatsEntries.clear();
+                        positionStatsEntries.addAll(newPositionStatsEntries);
+                    }
+                } catch (Exception e) {
+                    StatsClient.LOGGER.log(Level.ERROR, "Error while updating the stats", e);
                 }
                 try {
                     Thread.sleep(1000 * 30);
                 } catch (InterruptedException e) {
-                    StatsClient.LOGGER.log(Level.ERROR, e);
+                    StatsClient.LOGGER.log(Level.ERROR, "Sleep Error", e);
                 }
             }
 
@@ -169,51 +140,81 @@ public class GUI {
     }
 
     private void renderStats(MatrixStack stack) {
-        RenderSize result = new RenderSize(0, 0);
+        RenderSize result = new RenderSize(Config.wight, Config.high);
+
+        int distance = 14;
+        if (Config.headline) {
+            this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + Config.statsKeyID + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
+            result.height += distance;
+        }
+
         Color[] colors = {new Color(226, 176, 7), new Color(138, 149, 151), new Color(167, 104, 75)};
-        synchronized (this.scores) {
-            if (Config.headline) {
-                this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + Config.statsurl + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
-                result.height += 15;
-            }
-            for (int i = 0; i < this.scores.size(); i++) {
-                String playerName = ((String[]) this.scores.get(i))[0];
-                String score = ((String[]) this.scores.get(i))[1];
-                result.width = getWith(result.width, (i + 1) + ". " + playerName + ": " + score);
-                ItemStack itemStack = skull.get(playerName);
+        synchronized (positionStatsEntries) {
+            int i = 0;
+            for (PlayerStatsEntry statsEntry : positionStatsEntries) {
+                i++;
+                String playerName = statsEntry.getName();
+                String score = statsEntry.getValue();
+                int position = statsEntry.getPosition();
+                result.width = getWith(result.width, position + ". " + playerName + ": " + score);
+                ItemStack itemStack = skullList.get(playerName);
                 if (itemStack != null) {
-                    this.itemRenderer.renderGuiItemIcon(skull.get(playerName), 5, 30 + result.height);
+                    this.itemRenderer.renderGuiItemIcon(skullList.get(playerName), 5, 30 + result.height);
                 }
                 Objects.requireNonNull(this.fontRenderer);
                 if (i < 3) {
-                    this.fontRenderer.drawWithShadow(stack, "§l" + (i + 1) + ". " + playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), colors[i].getRGB());
+                    this.fontRenderer.drawWithShadow(stack, "§l" + position + ". " + playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), colors[i - 1].getRGB());
                 } else {
-                    this.fontRenderer.drawWithShadow(stack, "§l" + (i + 1) + ". " + playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
+                    this.fontRenderer.drawWithShadow(stack, "§l" + position + ". " + playerName + ": " + score, (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
                 }
-                result.height += 15;
+                result.height += distance;
             }
-            if (ownScore != null && ownPos != null && ownStack != null && ownPlayerName != null) {
-                boolean showOwnScore = true;
-                for (Object score : this.scores) {
-                    String playerName = ((String[]) score)[0];
-                    if (playerName.contains(ownPlayerName)) {
-                        showOwnScore = false;
-                        break;
+        }
+
+        if (ownStatsEntry != null) {
+            if (Config.headline) {
+                this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + "Deine Platzierung" + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
+                result.height += distance;
+            }
+
+            this.itemRenderer.renderGuiItemIcon(skullList.get(ownPlayerName), 5, 30 + result.height);
+            this.fontRenderer.drawWithShadow(stack, "§l" + ownStatsEntry.getDisplayPosition() + " " + ownPlayerName + ": " + ownStatsEntry.getValue(), (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
+            result.height += distance;
+        }
+
+
+        HashMap<PlayerStatsEntry, Integer> scoreList = new HashMap<>();
+        synchronized (otherStatsEntries) {
+            for (PlayerStatsEntry statsEntry : otherStatsEntries) {
+                scoreList.put(statsEntry, statsEntry.getDisplayPosition());
+            }
+
+            Set<Map.Entry<PlayerStatsEntry, Integer>> sorted = scoreList.entrySet().stream().sorted((o2, o1) -> o1.getValue().compareTo(o2.getValue()) * -1).collect(Collectors.toCollection(LinkedHashSet::new));
+
+            if (Config.headline) {
+                this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + "Andere Platzierung" + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
+                result.height += distance;
+            }
+            boolean first = true;
+            for (Map.Entry<PlayerStatsEntry, Integer> list : sorted) {
+                PlayerStatsEntry statsEntry = list.getKey();
+                if (statsEntry != null) {
+                    if (!otherStatsEntries.isEmpty()) {
+                        if (!first) {
+                            result.height += distance;
+                        }
+                        first = false;
+                        this.itemRenderer.renderGuiItemIcon(skullList.get(statsEntry.getName()), 5, 30 + result.height);
+                        this.fontRenderer.drawWithShadow(stack, "§l" + statsEntry.getDisplayPosition() + " " + statsEntry.getName() + ": " + statsEntry.getValue(), (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
                     }
                 }
-
-                if (showOwnScore) {
-                    this.fontRenderer.drawWithShadow(stack, "§l" + "----- " + "Deine Platzierung" + " -----", 5, (30 + result.height + 9 / 2f), Color.white.getRGB());
-                    result.height += 15;
-                    this.itemRenderer.renderGuiItemIcon(ownStack, 5, 30 + result.height);
-                    this.fontRenderer.drawWithShadow(stack, "§l" + ownPos + " " + ownPlayerName + ": " + ownScore, (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
-                }
-
             }
-
         }
-        if (result.width != 0)
+
+        if (result.width != 0) {
             result.width += 20;
+        }
+
     }
 
     private int getWith(int resultWidth, String text) {

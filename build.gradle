@@ -23,6 +23,7 @@ repositories {
     maven {url "https://maven.terraformersmc.com/releases"}
     maven {url "https://maven.shedaniel.me/"}
     maven {url "https://mvnrepository.com/artifact/org.jsoup/jsoup/"}
+    maven {url "https://www.iani.de/nexus/content/groups/public"}
 }
 
 configurations {
@@ -41,6 +42,10 @@ dependencies {
     modApi("com.terraformersmc:modmenu:${project.modmenu_version}")
 
     shade 'org.jsoup:jsoup:1.14.3'
+
+    implementation 'de.cubeside:cubesidestatswebapi:0.0.1-SNAPSHOT'
+    shade 'de.cubeside:cubesidestatswebapi:0.0.1-SNAPSHOT'
+
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
