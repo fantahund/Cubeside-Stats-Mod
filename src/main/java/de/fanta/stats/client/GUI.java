@@ -159,7 +159,7 @@ public class GUI {
                 result.width = getWith(result.width, position + ". " + playerName + ": " + score);
                 ItemStack itemStack = skullList.get(playerName);
                 if (itemStack != null) {
-                    this.itemRenderer.renderGuiItemIcon(skullList.get(playerName), 5, 30 + result.height);
+                    this.itemRenderer.renderGuiItemIcon(new MatrixStack(), skullList.get(playerName), 5, 30 + result.height);
                 }
                 Objects.requireNonNull(this.fontRenderer);
                 if (i < 3) {
@@ -177,7 +177,7 @@ public class GUI {
                 result.height += distance;
             }
 
-            this.itemRenderer.renderGuiItemIcon(skullList.get(ownPlayerName), 5, 30 + result.height);
+            this.itemRenderer.renderGuiItemIcon(new MatrixStack(), skullList.get(ownPlayerName), 5, 30 + result.height);
             this.fontRenderer.drawWithShadow(stack, "§l" + ownStatsEntry.getDisplayPosition() + " " + ownPlayerName + ": " + ownStatsEntry.getValue(), (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
             result.height += distance;
         }
@@ -204,7 +204,7 @@ public class GUI {
                             result.height += distance;
                         }
                         first = false;
-                        this.itemRenderer.renderGuiItemIcon(skullList.get(statsEntry.getName()), 5, 30 + result.height);
+                        this.itemRenderer.renderGuiItemIcon(new MatrixStack(), skullList.get(statsEntry.getName()), 5, 30 + result.height);
                         this.fontRenderer.drawWithShadow(stack, "§l" + statsEntry.getDisplayPosition() + " " + statsEntry.getName() + ": " + statsEntry.getValue(), (5 + 16 + 2), (30 + result.height + 9 / 2f), new Color(255, 255, 255).getRGB());
                     }
                 }
