@@ -8,15 +8,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 @Environment(EnvType.CLIENT)
 public class StatsClient implements ClientModInitializer {
@@ -38,6 +32,15 @@ public class StatsClient implements ClientModInitializer {
 
     private void getStatsKeys() {
         statsKeys = cubesideStats.getAllStatsKeys();
+    }
+
+    public static PlayerStatsProvider getStatsKey(String name) {
+        for (PlayerStatsProvider statsProvider : statsKeys) {
+            if (name.equals(statsProvider.getId())) {
+                return statsProvider;
+            }
+        }
+        return null;
     }
 
     public static CubesideStats getCubesideStats() {

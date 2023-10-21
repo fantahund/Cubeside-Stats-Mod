@@ -1,5 +1,6 @@
 package de.fanta.stats;
 
+import de.fanta.stats.client.GUI;
 import de.fanta.stats.client.StatsClient;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -36,6 +37,7 @@ public class Config {
         } catch (IOException e) {
             StatsClient.LOGGER.warn("Failed to write config!");
         }
+        GUI.updateStats();
     }
 
     public static void deserialize() {
