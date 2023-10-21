@@ -37,7 +37,9 @@ public class Config {
         } catch (IOException e) {
             StatsClient.LOGGER.warn("Failed to write config!");
         }
-        GUI.updateStats();
+        if (GUI.updater != null && GUI.updater.isAlive()) {
+            GUI.updateStats();
+        }
     }
 
     public static void deserialize() {

@@ -33,6 +33,7 @@ public class GUI {
     private static final HashMap<String, PlayerStatsEntry> otherStatsEntries = new HashMap<>();
     private static final HashMap<String, PlayerStatsEntry> positionStatsEntries = new HashMap<>();
     private static final HashMap<String, ItemStack> skullList = new HashMap<>();
+    private static String description = "";
     public static Thread updater;
 
     public GUI() {
@@ -78,8 +79,7 @@ public class GUI {
 
         int distance = 14;
         if (Config.headline) {
-            PlayerStatsProvider provider = StatsClient.getStatsKey(Config.statsKeyID);
-            drawContext.drawText(this.fontRenderer, "§l" + "----- " + (provider != null ? provider.getTitle() : Config.statsKeyID) + " -----", 5, (30 + result.height + 9 / 2), Color.white.getRGB(), true);
+            drawContext.drawText(this.fontRenderer, "§l" + "----- " + description + " -----", 5, (30 + result.height + 9 / 2), Color.white.getRGB(), true);
             result.height += distance;
         }
 
@@ -178,11 +178,14 @@ public class GUI {
                 return;
             }
 
+            PlayerStatsProvider provider = StatsClient.getStatsKey(Config.statsKeyID);
+            description = provider != null ? provider.getTitle() : Config.statsKeyID;
+
             // - Get PositionScores
-            Collection<PlayerStatsEntry> newPositionStatsEntries = new ArrayList<>(StatsClient.getCubesideStats().getStatsFromPositionRange(Config.statsKeyID, 0, Config.places));
+            Collection<PlayerStatsEntry> newPositionStatsEntries = new ArrayList<>(StatsClient.getCubesideStats().getStatsFromPositionRange(Config.statsKeyID, 0, 30));
             synchronized (skullList) {
                 for (PlayerStatsEntry statsPlayer : newPositionStatsEntries) {
-                    if (!skullList.containsKey(statsPlayer.getName())) {
+                    if (!skullList.containsKey(statsPlayer.getName()) && statsPlayer.getPosition() <= Config.places) {
                         skullList.put(statsPlayer.getName(), getCustomHead(statsPlayer.getName()));
                     }
                 }
@@ -191,8 +194,10 @@ public class GUI {
             synchronized (positionStatsEntries) {
                 positionStatsEntries.clear();
                 for (PlayerStatsEntry entry : newPositionStatsEntries) {
-                    System.out.println(entry.getPosition() + "(" + entry.getDisplayPosition() + ") ." + entry.getName());
-                    positionStatsEntries.put(entry.getName(), entry);
+                    if (entry.getPosition() <= Config.places) {
+                        System.out.println(entry.getPosition() + ": " + entry.getName());
+                        positionStatsEntries.put(entry.getName(), entry);
+                    }
                 }
             }
 
