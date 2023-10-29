@@ -3,6 +3,7 @@ package de.fanta.stats;
 import de.fanta.stats.client.GUI;
 import de.fanta.stats.client.StatsClient;
 import net.fabricmc.loader.api.FabricLoader;
+import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +39,7 @@ public class Config {
             StatsClient.LOGGER.warn("Failed to write config!");
         }
         if (GUI.updater != null && GUI.updater.isAlive()) {
-            GUI.updateStats();
+            new Thread(GUI::updateStats).start();
         }
     }
 
