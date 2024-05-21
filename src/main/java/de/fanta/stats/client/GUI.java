@@ -4,14 +4,12 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import de.cubeside.cubesidestatswebapi.model.PlayerStatsEntry;
 import de.cubeside.cubesidestatswebapi.model.PlayerStatsProvider;
 import de.fanta.stats.Config;
-import net.minecraft.block.entity.SkullBlockEntity;
+import de.iani.cubesideutils.fabric.item.CustomHeadUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import org.apache.logging.log4j.Level;
 
 import java.awt.*;
@@ -186,7 +184,7 @@ public class GUI {
             synchronized (skullList) {
                 for (PlayerStatsEntry statsPlayer : newPositionStatsEntries) {
                     if (!skullList.containsKey(statsPlayer.getName()) && statsPlayer.getPosition() <= Config.places) {
-                        skullList.put(statsPlayer.getName(), getCustomHead(statsPlayer.getName()));
+                        skullList.put(statsPlayer.getName(), CustomHeadUtil.getPlayerHead(statsPlayer.getUuid()));
                     }
                 }
             }
@@ -195,7 +193,6 @@ public class GUI {
                 positionStatsEntries.clear();
                 for (PlayerStatsEntry entry : newPositionStatsEntries) {
                     if (entry.getPosition() <= Config.places) {
-                        System.out.println(entry.getPosition() + ": " + entry.getName());
                         positionStatsEntries.put(entry.getName(), entry);
                     }
                 }
@@ -207,7 +204,7 @@ public class GUI {
 
             synchronized (skullList) {
                 if (!skullList.containsKey(ownPlayerName)) {
-                    skullList.put(ownPlayerName, getCustomHead(ownPlayerName));
+                    skullList.put(ownPlayerName, CustomHeadUtil.getPlayerHead(ownStatsEntry.getUuid()));
                 }
             }
 
@@ -221,7 +218,7 @@ public class GUI {
             synchronized (skullList) {
                 for (PlayerStatsEntry statsPlayer : newOtherPositionEntries) {
                     if (!skullList.containsKey(statsPlayer.getName())) {
-                        skullList.put(statsPlayer.getName(), getCustomHead(statsPlayer.getName()));
+                        skullList.put(statsPlayer.getName(), CustomHeadUtil.getPlayerHead(statsPlayer.getUuid()));
                     }
                 }
             }
@@ -235,14 +232,6 @@ public class GUI {
         } catch (Exception e) {
             StatsClient.LOGGER.log(Level.ERROR, "Error while updating the stats", e);
         }
-    }
-
-    private static ItemStack getCustomHead(String playerName) {
-        ItemStack playerHead = new ItemStack(Items.PLAYER_HEAD);
-        NbtCompound compound = playerHead.getOrCreateNbt();
-        compound.putString(SkullBlockEntity.SKULL_OWNER_KEY, playerName);
-        SkullBlockEntity.fillSkullOwner(compound);
-        return playerHead;
     }
 }
 
