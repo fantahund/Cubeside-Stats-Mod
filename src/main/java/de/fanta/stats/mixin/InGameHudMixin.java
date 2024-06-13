@@ -3,8 +3,7 @@ package de.fanta.stats.mixin;
 import de.fanta.stats.client.GUI;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.util.Identifier;
-import org.objectweb.asm.Opcodes;
+import net.minecraft.client.render.RenderTickCounter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,11 +16,7 @@ abstract class InGameHudMixin {
     private static GUI statsGUI;
 
     @Inject(method="renderMainHud", at=@At(value = "RETURN"))
-    private void renderOverlay(DrawContext context, float tickDelta, CallbackInfo ci) {
-        if (statsGUI != null && !GUI.updater.isAlive()) {
-            statsGUI = null;
-        }
-
+    private void renderOverlay(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         if (statsGUI == null) {
             statsGUI = new GUI();
         }

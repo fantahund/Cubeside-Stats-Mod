@@ -25,6 +25,7 @@
   },
   "suggests": {
     "modmenu": "*",
-    "cloth-config2": "*"
+    "cloth-config2": "*",
+    "cubesideutilsfabricclient": ">=1.0.3-SNAPSHOT"
   }
 }

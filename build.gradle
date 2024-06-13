@@ -39,11 +39,10 @@ dependencies {
     }
     modApi("com.terraformersmc:modmenu:${project.modmenu_version}")
 
-    shade 'org.jsoup:jsoup:1.14.3'
+    shade 'org.jsoup:jsoup:1.15.3'
 
-    implementation 'de.cubeside:cubesidestatswebapi:0.0.1-SNAPSHOT'
-    shade 'de.cubeside:cubesidestatswebapi:0.0.1-SNAPSHOT'
-    modImplementation include("de.cubeside.cubesideutils.fabric:CubesideUtilsFabricClient:1.0.1-SNAPSHOT")
+    implementation shade('de.cubeside:cubesidestatswebapi:0.0.1-SNAPSHOT')
+    modImplementation "de.cubeside.cubesideutils.fabric:CubesideUtilsFabricClient:${project.cubeside_utils_version}"
 
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.

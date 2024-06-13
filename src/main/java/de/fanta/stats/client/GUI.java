@@ -5,6 +5,8 @@ import de.cubeside.cubesidestatswebapi.model.PlayerStatsEntry;
 import de.cubeside.cubesidestatswebapi.model.PlayerStatsProvider;
 import de.fanta.stats.Config;
 import de.iani.cubesideutils.fabric.item.CustomHeadUtil;
+import de.iani.cubesideutils.fabric.scheduler.ScheduledTask;
+import de.iani.cubesideutils.fabric.scheduler.Scheduler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -20,36 +22,25 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class GUI {
     private static MinecraftClient minecraft;
-    private static boolean visible;
     private final TextRenderer fontRenderer;
     private static PlayerStatsEntry ownStatsEntry;
     private static String ownPlayerName;
-    private static final HashMap<String, PlayerStatsEntry> otherStatsEntries = new HashMap<>();
-    private static final HashMap<String, PlayerStatsEntry> positionStatsEntries = new HashMap<>();
-    private static final HashMap<String, ItemStack> skullList = new HashMap<>();
+    private static final ConcurrentHashMap<String, PlayerStatsEntry> otherStatsEntries = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, PlayerStatsEntry> positionStatsEntries = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, ItemStack> skullList = new ConcurrentHashMap<>();
     private static String description = "";
-    public static Thread updater;
+    public static ScheduledTask updater;
 
     public GUI() {
         minecraft = MinecraftClient.getInstance();
         this.fontRenderer = minecraft.textRenderer;
-        visible = true;
-        updater = new Thread(() -> {
-            while (true) {
-                updateStats();
-                try {
-                    Thread.sleep(1000 * 30);
-                } catch (InterruptedException e) {
-                    StatsClient.LOGGER.log(Level.ERROR, "Sleep Error", e);
-                }
-            }
 
-        });
-        updater.start();
+        updater = Scheduler.scheduleAsynchronousRepeatingTask(GUI::updateStats, 0, 20 * 30);
     }
 
     private static class RenderSize {
@@ -63,7 +54,7 @@ public class GUI {
     }
 
     public void onRenderGameOverlayPost(DrawContext drawContext) {
-        if (!visible || minecraft.getDebugHud().shouldShowDebugHud()) {
+        if (minecraft.getDebugHud().shouldShowDebugHud()) {
             return;
         }
         if (Config.showstats && updater != null) {
@@ -166,8 +157,13 @@ public class GUI {
     }
 
     public static void updateStats() {
+        System.out.println("Start Update");
+        long updateTime = System.currentTimeMillis();
         try {
             if (minecraft == null) {
+                return;
+            }
+            if (!Config.showstats) {
                 return;
             }
             // - Get OwnScoreplaces
@@ -232,6 +228,7 @@ public class GUI {
         } catch (Exception e) {
             StatsClient.LOGGER.log(Level.ERROR, "Error while updating the stats", e);
         }
+        System.out.println("Update dome in " + (System.currentTimeMillis() - updateTime) + "ms");
     }
 }
 

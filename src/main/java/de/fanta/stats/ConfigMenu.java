@@ -2,7 +2,6 @@ package de.fanta.stats;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import de.cubeside.cubesidestatswebapi.model.PlayerStatsEntry;
 import de.cubeside.cubesidestatswebapi.model.PlayerStatsProvider;
 import de.fanta.stats.client.StatsClient;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
@@ -11,9 +10,6 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
-
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 public class ConfigMenu implements ModMenuApi {
 
