@@ -157,8 +157,6 @@ public class GUI {
     }
 
     public static void updateStats() {
-        System.out.println("Start Update");
-        long updateTime = System.currentTimeMillis();
         try {
             if (minecraft == null) {
                 return;
@@ -228,7 +226,6 @@ public class GUI {
         } catch (Exception e) {
             StatsClient.LOGGER.log(Level.ERROR, "Error while updating the stats", e);
         }
-        System.out.println("Update dome in " + (System.currentTimeMillis() - updateTime) + "ms");
     }
 }
 
