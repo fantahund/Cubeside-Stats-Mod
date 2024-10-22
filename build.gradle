@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'fabric-loom' version '1.8-SNAPSHOT'
     id 'maven-publish'
     id "com.github.johnrengelman.shadow" version "7.0.0"
 }
@@ -11,7 +11,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 
 defaultTasks('clean', 'build', 'publishToMavenLocal')
 
-archivesBaseName = project.archives_base_name
+archivesBaseName = project.archives_base_name + "-" + project.minecraft_version
 version = project.mod_version
 group = project.maven_group
 

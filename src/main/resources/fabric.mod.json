@@ -26,6 +26,6 @@
   "suggests": {
     "modmenu": "*",
     "cloth-config2": "*",
-    "cubesideutilsfabricclient": ">=1.0.3-SNAPSHOT"
+    "cubesideutilsfabricclient": ">=1.0.5-SNAPSHOT"
   }
 }

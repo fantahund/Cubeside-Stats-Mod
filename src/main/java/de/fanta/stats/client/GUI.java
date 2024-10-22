@@ -158,10 +158,7 @@ public class GUI {
 
     public static void updateStats() {
         try {
-            if (minecraft == null) {
-                return;
-            }
-            if (!Config.showstats) {
+            if (minecraft == null || !Config.showstats) {
                 return;
             }
             // - Get OwnScoreplaces
